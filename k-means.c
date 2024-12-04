@@ -1,20 +1,18 @@
 /* Fichier    : k-means
  * Version    : 6
- * Date       : 13/11/24
+ * Date       : 04/12/24
  * Auteur     : Théo Couerbe
  * Plateforme : windows 11
- * Commande de compilation : gcc -Wall -Wextra -ansi -Wpedantic -o k-means_v6 k-means_v6.c
- * Commande d'exécution : ./k-means_v6
+ * Commande de compilation : gcc -Wall -Wextra -ansi -Wpedantic -o k-means k-means.c
+ * Commande d'exécution : ./k-means
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#define NB_PTS 10
-#define K 3
-#define DIM 2
-
+#include "100_points_de_dimension_2.txt"
+#define K 4
 struct point {
-    double coord[DIM];
+    double* coord;
     int cluster;
 };
 
@@ -126,54 +124,56 @@ int calcule_centroides(point *C, point *P, int dim, int k, int nb_pts){
     return i;
 }
 
-void initialise(point *C, point *P, int nb_pts, int k, int dim){
+point* initialise_liste_points(double pts[][DIM], int dim, int nb_pts) {
     int i;
     int d;
-    point Pts[] = {
-        {{-48.358319,  43.397062}, 0},
-        {{-82.968798, 100.258353}, 0},
-        {{102.162965, -77.655336}, 0},
-        {{-29.703875, 121.367630}, 0},
-        {{-1.497668,   0.269966}, 0},
-        {{61.963342, -27.502030}, 0},
-        {{38.378263, -12.302994}, 0},
-        {{-3.953463,  -6.158928}, 0},
-        {{-24.933400,  22.100650}, 0},
-        {{16.373373, -53.232660}, 0}
-    };
-    point Ctr[] = {
-    {{-48.358319,  43.397062}, 0},
-    {{-82.968798, 100.258353}, 0},
-    {{102.162965, -77.655336}, 0}
-    };
-
-    Ctr[0].cluster = nb_pts;
-
+    point* Pts_res = malloc(nb_pts*sizeof(point));
     for (i=0; i<nb_pts; i++){
-        P[i].cluster = Pts[i].cluster;
+        Pts_res[i].cluster = 0;
+        Pts_res[i].coord = (double*)malloc(dim*sizeof(double));
         for (d=0; d<dim; d++){
-            P[i].coord[d] = Pts[i].coord[d];
+            Pts_res[i].coord[d] = pts[i][d];
         }
     }
-    for (i=0; i<k; i++){
-        C[i].cluster = Ctr[i].cluster;
-        for (d=0; d<dim; d++){
-            C[i].coord[d] = Ctr[i].coord[d];
-        }
+    if (!Pts_res) {
+        return NULL;
     }
+    return Pts_res;
 }
 
 int main() {
+    int i;
+    int d;
 
-    point C[K];
-    point P[NB_PTS];
+    point* C;
+    point* P;
     int nb_iterations;
 
-    initialise(C, P, NB_PTS, K, DIM);
+    /* Initialisation de la liste des centroïdes */
+    C = malloc(K*sizeof(point));
+    for (i=0; i<K; i++){
+        C[i].cluster = 0;
+        C[i].coord = malloc(DIM*sizeof(double));
+        for (d=0; d<DIM; d++){
+            C[i].coord[d] = pts[i][d];
+        }
+    }
+    C[0].cluster = NB_PTS;
+
+    P = initialise_liste_points(pts, DIM, NB_PTS);
 
     nb_iterations = calcule_centroides(C, P, DIM, K, NB_PTS);
 
     exporte_resultats(C, P, NB_PTS, K, DIM, nb_iterations);
+
+    for (i=0; i<K; i++){
+        free(C[i].coord);
+    }
+    for (i=0; i<NB_PTS; i++){
+        free(P[i].coord);
+    }
+    free(C);
+    free(P);
 
     return 0;
 }
